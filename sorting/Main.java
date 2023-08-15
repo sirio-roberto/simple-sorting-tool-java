@@ -6,6 +6,11 @@ public class Main {
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(final String[] args) {
+        if (hasSortingArg(args)) {
+            handleIntSorting();
+            return;
+        }
+
         String dataType = getDataTypeFromArgs(args);
 
         switch (dataType) {
@@ -13,6 +18,31 @@ public class Main {
             case "line" -> handleLineInput();
             default -> handleWordInput();
         }
+    }
+
+    private static void handleIntSorting() {
+        List<Integer> intList = new ArrayList<>();
+        while (scanner.hasNextLong()) {
+            int number = scanner.nextInt();
+            intList.add(number);
+        }
+
+        System.out.printf("""
+                Total numbers: %s.
+                Sorted data:""", intList.size());
+
+        intList.stream()
+                .sorted(Integer::compareTo)
+                .forEach(i -> System.out.print(" " + i));
+    }
+
+    private static boolean hasSortingArg(String[] args) {
+        for (String arg : args) {
+            if ("-sortIntegers".equals(arg)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void handleWordInput() {
