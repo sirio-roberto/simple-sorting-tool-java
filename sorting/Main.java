@@ -1,17 +1,31 @@
 package sorting;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class Main {
     private static final String VALID_SORTING_TYPES = "byCount,natural";
     private static final String VALID_DATA_TYPES = "word,line,long";
-    private static final String VALID_ARGS = "-sortingType,-dataType";
-    private static final Scanner scanner = new Scanner(System.in);
+    private static final String VALID_ARGS = "-sortingType,-dataType,-inputFile,-outputFile";
+
+    private static final String FILE_NAME_REGEX = "[a-zA-Z0-9._]+";
+
+    private static final StringBuilder OUTPUT_STR = new StringBuilder();
+
+    private static String inputFileName = null;
+    private static String outputFileName = null;
+    private static Scanner scanner;
 
     public static void main(final String[] args) {
         if (areArgsInvalid(args)) {
             return;
         }
+        getFileNamesFromArgs(args);
+        instantiateScanner();
+
         boolean natural = isNaturalSorting(args);
         String dataType = getDataTypeFromArgs(args);
 
@@ -19,6 +33,30 @@ public class Main {
             case "long" -> handleLongInput(natural);
             case "line" -> handleLineInput(natural);
             default -> handleWordInput(natural);
+        }
+        handleOutput();
+    }
+
+    private static void instantiateScanner() {
+        try {
+            if (inputFileName == null) {
+                scanner = new Scanner(System.in);
+            } else {
+                scanner = new Scanner(new File(inputFileName));
+            }
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void getFileNamesFromArgs(String[] args) {
+        for (int i = 0; i < args.length - 1; i++) {
+            if ("-inputFile".equals(args[i])) {
+                inputFileName = args[i + 1];
+            }
+            if ("-outputFile".equals(args[i])) {
+                outputFileName = args[i + 1];
+            }
         }
     }
 
@@ -30,6 +68,14 @@ public class Main {
             }
             if ("-dataType".equals(args[i]) && (i == args.length - 1 || !VALID_DATA_TYPES.contains(args[i+ 1]))) {
                 System.out.println("No data type defined!");
+                return true;
+            }
+            if ("-inputFile".equals(args[i]) && (i == args.length - 1 || !args[i+ 1].matches(FILE_NAME_REGEX))) {
+                System.out.println("No file name defined!");
+                return true;
+            }
+            if ("-outputFile".equals(args[i]) && (i == args.length - 1 || !args[i+ 1].matches(FILE_NAME_REGEX))) {
+                System.out.println("No file name defined!");
                 return true;
             }
         }
@@ -57,12 +103,12 @@ public class Main {
             wordList.add(word);
         }
 
-        System.out.printf("Total words: %s.\n", wordList.size());
+        OUTPUT_STR.append(String.format("Total words: %s.\n", wordList.size()));
 
         if (isNatural) {
             wordList.stream()
                     .sorted(String::compareTo)
-                    .forEach(i -> System.out.print(i + " "));
+                    .forEach(i -> OUTPUT_STR.append(i).append(" "));
         } else {
             Map<String, Long> valueOccurMap = new HashMap<>();
             for (String s : wordList) {
@@ -73,8 +119,8 @@ public class Main {
             valueOccurMap.keySet().stream()
                     .sorted(Comparator.comparing(k -> k))
                     .sorted(Comparator.comparingLong(valueOccurMap::get))
-                    .forEach(k -> System.out.printf("%s: %s time(s), %s%%\n",
-                            k, valueOccurMap.get(k), getPercentage(valueOccurMap.get(k), wordList.size())));
+                    .forEach(k -> OUTPUT_STR.append(String.format("%s: %s time(s), %s%%\n",
+                            k, valueOccurMap.get(k), getPercentage(valueOccurMap.get(k), wordList.size()))));
         }
     }
 
@@ -84,12 +130,12 @@ public class Main {
             String line = scanner.nextLine();
             lineList.add(line);
         }
-        System.out.printf("Total words: %s.\n", lineList.size());
+        OUTPUT_STR.append(String.format("Total words: %s.\n", lineList.size()));
 
         if (isNatural) {
             lineList.stream()
                     .sorted(String::compareTo)
-                    .forEach(System.out::println);
+                    .forEach(l -> OUTPUT_STR.append(l).append("\n"));
         } else {
             Map<String, Long> valueOccurMap = new HashMap<>();
             for (String s : lineList) {
@@ -100,8 +146,8 @@ public class Main {
             valueOccurMap.keySet().stream()
                     .sorted(Comparator.comparing(k -> k))
                     .sorted(Comparator.comparingLong(valueOccurMap::get))
-                    .forEach(k -> System.out.printf("%s: %s time(s), %s%%\n",
-                            k, valueOccurMap.get(k), getPercentage(valueOccurMap.get(k), lineList.size())));
+                    .forEach(k -> OUTPUT_STR.append(String.format("%s: %s time(s), %s%%\n",
+                            k, valueOccurMap.get(k), getPercentage(valueOccurMap.get(k), lineList.size()))));
         }
     }
 
@@ -117,12 +163,12 @@ public class Main {
             }
         }
 
-        System.out.printf("Total numbers: %s.\n", longList.size());
+        OUTPUT_STR.append(String.format("Total numbers: %s.\n", longList.size()));
 
         if (isNatural) {
             longList.stream()
                     .sorted(Long::compareTo)
-                    .forEach(i -> System.out.print(i + " "));
+                    .forEach(i -> OUTPUT_STR.append(i).append(" "));
         } else {
             Map<Long, Long> valueOccurMap = new HashMap<>();
             for (long l : longList) {
@@ -133,8 +179,20 @@ public class Main {
             valueOccurMap.keySet().stream()
                     .sorted(Comparator.comparingLong(k -> k))
                     .sorted(Comparator.comparingLong(valueOccurMap::get))
-                    .forEach(k -> System.out.printf("%s: %s time(s), %s%%\n",
-                            k, valueOccurMap.get(k), getPercentage(valueOccurMap.get(k), longList.size())));
+                    .forEach(k -> OUTPUT_STR.append(String.format("%s: %s time(s), %s%%\n",
+                            k, valueOccurMap.get(k), getPercentage(valueOccurMap.get(k), longList.size()))));
+        }
+    }
+
+    private static void handleOutput() {
+        if (outputFileName == null) {
+            System.out.println(OUTPUT_STR);
+        } else {
+            try (FileWriter writer = new FileWriter(outputFileName)) {
+                writer.write(OUTPUT_STR.toString());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
