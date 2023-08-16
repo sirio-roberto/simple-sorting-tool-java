@@ -6,102 +6,106 @@ public class Main {
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(final String[] args) {
-        if (hasSortingArg(args)) {
-            handleIntSorting();
-            return;
-        }
-
+        boolean natural = isNaturalSorting(args);
         String dataType = getDataTypeFromArgs(args);
 
         switch (dataType) {
-            case "long" -> handleLongInput();
-            case "line" -> handleLineInput();
-            default -> handleWordInput();
+            case "long" -> handleLongInput(natural);
+            case "line" -> handleLineInput(natural);
+            default -> handleWordInput(natural);
         }
     }
 
-    private static void handleIntSorting() {
-        List<Integer> intList = new ArrayList<>();
-        while (scanner.hasNextLong()) {
-            int number = scanner.nextInt();
-            intList.add(number);
-        }
-
-        System.out.printf("""
-                Total numbers: %s.
-                Sorted data:""", intList.size());
-
-        intList.stream()
-                .sorted(Integer::compareTo)
-                .forEach(i -> System.out.print(" " + i));
-    }
-
-    private static boolean hasSortingArg(String[] args) {
+    private static boolean isNaturalSorting(String[] args) {
         for (String arg : args) {
-            if ("-sortIntegers".equals(arg)) {
-                return true;
+            if ("byCount".equals(arg)) {
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
-    private static void handleWordInput() {
+    private static void handleWordInput(boolean isNatural) {
         List<String> wordList = new ArrayList<>();
         while (scanner.hasNext()) {
             String word = scanner.next();
             wordList.add(word);
         }
-        String longest = wordList.stream()
-                .max(Comparator.comparing(String::length))
-                .orElse("");
-        long occurrence = wordList.stream()
-                .filter(l -> l.equals(longest))
-                .count();
 
-        System.out.printf("""
-                Total words: %s.
-                The longest word: %s (%s time(s), %d%%).
-                """, wordList.size(), longest, occurrence, getPercentage(occurrence, wordList.size()));
+        System.out.printf("Total words: %s.\n", wordList.size());
+
+        if (isNatural) {
+            wordList.stream()
+                    .sorted(String::compareTo)
+                    .forEach(i -> System.out.print(i + " "));
+        } else {
+            Map<String, Long> valueOccurMap = new HashMap<>();
+            for (String s : wordList) {
+                long occurrences = wordList.stream().filter(v -> v.equals(s)).count();
+                valueOccurMap.put(s, occurrences);
+            }
+
+            valueOccurMap.keySet().stream()
+                    .sorted(Comparator.comparing(k -> k))
+                    .sorted(Comparator.comparingLong(valueOccurMap::get))
+                    .forEach(k -> System.out.printf("%s: %s time(s), %s%%\n",
+                            k, valueOccurMap.get(k), getPercentage(valueOccurMap.get(k), wordList.size())));
+        }
     }
 
-    private static void handleLineInput() {
+    private static void handleLineInput(boolean isNatural) {
         List<String> lineList = new ArrayList<>();
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
             lineList.add(line);
         }
-        String longest = lineList.stream()
-                .max(Comparator.comparing(String::length))
-                .orElse("");
-        long occurrence = lineList.stream()
-                .filter(l -> l.equals(longest))
-                .count();
+        System.out.printf("Total words: %s.\n", lineList.size());
 
-        System.out.printf("""
-                Total lines: %s.
-                The longest line:
-                %s
-                (%s time(s), %d%%).
-                """, lineList.size(), longest, occurrence, getPercentage(occurrence, lineList.size()));
+        if (isNatural) {
+            lineList.stream()
+                    .sorted(String::compareTo)
+                    .forEach(System.out::println);
+        } else {
+            Map<String, Long> valueOccurMap = new HashMap<>();
+            for (String s : lineList) {
+                long occurrences = lineList.stream().filter(v -> v.equals(s)).count();
+                valueOccurMap.put(s, occurrences);
+            }
+
+            valueOccurMap.keySet().stream()
+                    .sorted(Comparator.comparing(k -> k))
+                    .sorted(Comparator.comparingLong(valueOccurMap::get))
+                    .forEach(k -> System.out.printf("%s: %s time(s), %s%%\n",
+                            k, valueOccurMap.get(k), getPercentage(valueOccurMap.get(k), lineList.size())));
+        }
     }
 
-    private static void handleLongInput() {
+    private static void handleLongInput(boolean isNatural) {
         List<Long> longList = new ArrayList<>();
         while (scanner.hasNextLong()) {
             long number = scanner.nextLong();
             longList.add(number);
         }
-        long greatest = longList.stream()
-                .max(Long::compare)
-                .orElse(0L);
-        long occurrence = longList.stream()
-                .filter(l -> l == greatest)
-                .count();
 
-        System.out.printf("""
-                Total numbers: %s.
-                The greatest number: %s (%s time(s), %d%%).
-                """, longList.size(), greatest, occurrence, getPercentage(occurrence, longList.size()));
+        System.out.printf("Total numbers: %s.\n", longList.size());
+
+        if (isNatural) {
+            longList.stream()
+                    .sorted(Long::compareTo)
+                    .forEach(i -> System.out.print(i + " "));
+        } else {
+            Map<Long, Long> valueOccurMap = new HashMap<>();
+            for (long l : longList) {
+                long occurrences = longList.stream().filter(v -> v == l).count();
+                valueOccurMap.put(l, occurrences);
+            }
+
+            valueOccurMap.keySet().stream()
+                    .sorted(Comparator.comparingLong(k -> k))
+                    .sorted(Comparator.comparingLong(valueOccurMap::get))
+                    .forEach(k -> System.out.printf("%s: %s time(s), %s%%\n",
+                            k, valueOccurMap.get(k), getPercentage(valueOccurMap.get(k), longList.size())));
+        }
     }
 
     private static int getPercentage(long qty, long total) {
