@@ -3,9 +3,15 @@ package sorting;
 import java.util.*;
 
 public class Main {
+    private static final String VALID_SORTING_TYPES = "byCount,natural";
+    private static final String VALID_DATA_TYPES = "word,line,long";
+    private static final String VALID_ARGS = "-sortingType,-dataType";
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(final String[] args) {
+        if (areArgsInvalid(args)) {
+            return;
+        }
         boolean natural = isNaturalSorting(args);
         String dataType = getDataTypeFromArgs(args);
 
@@ -14,6 +20,25 @@ public class Main {
             case "line" -> handleLineInput(natural);
             default -> handleWordInput(natural);
         }
+    }
+
+    private static boolean areArgsInvalid(String[] args) {
+        for (int i = 0; i < args.length; i++) {
+            if ("-sortingType".equals(args[i]) && (i == args.length - 1 || !VALID_SORTING_TYPES.contains(args[i+ 1]))) {
+                System.out.println("No sorting type defined!");
+                return true;
+            }
+            if ("-dataType".equals(args[i]) && (i == args.length - 1 || !VALID_DATA_TYPES.contains(args[i+ 1]))) {
+                System.out.println("No data type defined!");
+                return true;
+            }
+        }
+        for (String arg : args) {
+            if (arg.startsWith("-") && !VALID_ARGS.contains(arg)) {
+                System.out.printf("\"%s\" is not a valid parameter. It will be skipped.\n", arg);
+            }
+        }
+        return false;
     }
 
     private static boolean isNaturalSorting(String[] args) {
@@ -82,9 +107,14 @@ public class Main {
 
     private static void handleLongInput(boolean isNatural) {
         List<Long> longList = new ArrayList<>();
-        while (scanner.hasNextLong()) {
-            long number = scanner.nextLong();
-            longList.add(number);
+        while (scanner.hasNext()) {
+            String scannedStr = scanner.next();
+            if (!scannedStr.matches("-?\\d+")) {
+                System.out.printf("\"%s\" is not a long. It will be skipped.\n", scannedStr);
+            } else {
+                long number = Long.parseLong(scannedStr);
+                longList.add(number);
+            }
         }
 
         System.out.printf("Total numbers: %s.\n", longList.size());
